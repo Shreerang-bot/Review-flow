@@ -1,14 +1,16 @@
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-let openaiClient: OpenAI | null = null;
+let geminiClient: GoogleGenerativeAI | null = null;
 
-function getOpenAIClient(): OpenAI {
-  if (!openaiClient) {
-    openaiClient = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+function getGeminiClient(): GoogleGenerativeAI {
+  if (!geminiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY environment variable is not set');
+    }
+    geminiClient = new GoogleGenerativeAI(apiKey);
   }
-  return openaiClient;
+  return geminiClient;
 }
 
 export async function generateReview(
@@ -37,31 +39,25 @@ Rules:
 Write only the review text, nothing else.`;
 
   try {
-    const completion = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a helpful assistant that generates authentic Google reviews for retail stores. Your reviews should sound like they were written by real customers.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      max_tokens: 200,
-      temperature: 0.8,
+    const model = getGeminiClient().getGenerativeModel({
+      model: 'gemini-2.0-flash',
+      systemInstruction: 'You are a helpful assistant that generates authentic Google reviews for retail stores. Your reviews should sound like they were written by real customers.',
+      generationConfig: {
+        maxOutputTokens: 200,
+        temperature: 0.8,
+      },
     });
 
-    const review = completion.choices[0]?.message?.content?.trim();
-    
+    const result = await model.generateContent(prompt);
+    const review = result.response.text().trim();
+
     if (!review) {
       throw new Error('No review generated');
     }
 
     return review;
   } catch (error) {
-    console.error('OpenAI API error:', error);
+    console.error('Gemini API error:', error);
     throw new Error('Failed to generate review. Please try again.');
   }
 }
