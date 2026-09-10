@@ -64,8 +64,13 @@ export function ReviewGenerator({
 
   // Copy & open Google handler (works for both AI and manual)
   const handleCopyAndOpen = async () => {
-    const reviewText = aiEnabled ? generatedReview : manualReview;
+    const reviewText = (showManualInput || !aiEnabled) ? manualReview : generatedReview;
     if (!reviewText.trim()) {
+      if (googleReviewUrl) {
+        toast.info('Opening Google Reviews...');
+        window.open(googleReviewUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
       toast.error('Please write a review first');
       return;
     }
