@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase/client';
 import { businessSettingsSchema } from '@/lib/validators/schemas';
+import { slugify } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface BusinessData {
@@ -84,12 +85,7 @@ export default function SettingsPage() {
   };
 
   const handleSave = async () => {
-    if (!business) {
-      toast.error('Business data not loaded. Please refresh the page.');
-      return;
-    }
-
-    // Validate - but skip URL validation for optional fields
+    // Validate business name
     if (!formData.name.trim()) {
       toast.error('Business name is required.');
       return;
@@ -104,20 +100,44 @@ export default function SettingsPage() {
         return;
       }
 
-      const updateData = {
+      const businessPayload = {
         name: formData.name.trim(),
         logo_url: formData.logo_url.trim() || null,
         google_review_url: formData.google_review_url.trim() || null,
         review_threshold: formData.review_threshold,
         welcome_message: formData.welcome_message.trim() || 'How was your shopping experience today?',
-        notification_email: formData.notification_email.trim() || null,
+        notification_email: formData.notification_email.trim() || user.email || null,
         primary_color: formData.primary_color || '#4F46E5',
         ai_review_enabled: formData.ai_review_enabled,
       };
 
+      if (!business) {
+        // Create business record if it doesn't exist yet
+        const slug = slugify(formData.name) + '-' + Date.now().toString(36).slice(-4);
+        const { data: newBusiness, error: insertError } = await supabase
+          .from('businesses')
+          .insert({
+            owner_id: user.id,
+            slug,
+            ...businessPayload,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Settings create business error:', insertError);
+          toast.error(`Failed to create business: ${insertError.message}`);
+          return;
+        }
+
+        setBusiness(newBusiness);
+        toast.success('Business created & settings saved! ✓');
+        return;
+      }
+
       const { error } = await supabase
         .from('businesses')
-        .update(updateData)
+        .update(businessPayload)
         .eq('id', business.id);
 
       if (error) {
