@@ -38,8 +38,7 @@ export function RatingSelector({ onRatingSelect, selectedRating }: RatingSelecto
             <motion.div
               initial={false}
               animate={{
-                scale: isActive ? 1 : 0.9,
-                rotate: isActive ? [0, -10, 10, 0] : 0,
+                scale: isActive ? 1.15 : 0.9,
               }}
               transition={{
                 type: 'spring',

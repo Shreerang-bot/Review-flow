@@ -143,24 +143,100 @@ export function ReviewGenerator({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <Button
-              onClick={handleGenerate}
-              disabled={isGenerating || selectedTags.length === 0}
-              className="w-full h-14 text-base font-medium bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-2xl shadow-lg shadow-indigo-200 transition-all duration-200 disabled:opacity-50"
-              id="generate-review-btn"
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating your review...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Generate Review
-                </>
-              )}
-            </Button>
+            {showManualInput ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <PenLine className="w-4 h-4 text-[#4F46E5]" />
+                    <label className="text-sm font-medium text-[#4B5563]">
+                      Write your review:
+                    </label>
+                  </div>
+                  <Textarea
+                    value={manualReview}
+                    onChange={(e) => setManualReview(e.target.value)}
+                    placeholder="Share your experience at our store..."
+                    className="min-h-[120px] text-base leading-relaxed rounded-xl border-[#E5E7EB] focus:border-[#4F46E5] focus:ring-[#4F46E5] resize-none bg-white p-4"
+                    maxLength={2000}
+                    id="manual-review-textarea"
+                  />
+                  <p className="text-xs text-[#9CA3AF] text-right">
+                    {manualReview.length}/2000
+                  </p>
+                </div>
+
+                <Button
+                  onClick={handleCopyAndOpen}
+                  disabled={!manualReview.trim()}
+                  className="w-full h-14 text-base font-medium bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-2xl shadow-lg shadow-indigo-200 transition-all duration-200 disabled:opacity-50"
+                  id="copy-and-open-manual-btn"
+                >
+                  <Copy className="w-5 h-5 mr-2" />
+                  Copy Review & Open Google
+                  <ExternalLink className="w-4 h-4 ml-2 opacity-70" />
+                </Button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualInput(false)}
+                    className="text-xs text-[#6B7280] hover:text-[#4F46E5] transition-colors"
+                  >
+                    ✨ Switch back to AI Review
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={isGenerating || selectedTags.length === 0}
+                  className="w-full h-14 text-base font-medium bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-2xl shadow-lg shadow-indigo-200 transition-all duration-200 disabled:opacity-50"
+                  id="generate-review-btn"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating your review...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Generate Review
+                    </>
+                  )}
+                </Button>
+
+                {selectedTags.length === 0 && (
+                  <p className="text-xs text-center text-[#9CA3AF]">
+                    Select what you liked above to generate an AI review
+                  </p>
+                )}
+
+                <div className="flex items-center justify-center gap-3 pt-1 text-xs text-[#6B7280]">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualInput(true)}
+                    className="hover:text-[#111827] underline underline-offset-2"
+                  >
+                    Write review manually
+                  </button>
+                  {googleReviewUrl && (
+                    <>
+                      <span>•</span>
+                      <a
+                        href={googleReviewUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-[#4F46E5] inline-flex items-center gap-1 underline underline-offset-2"
+                      >
+                        Open Google directly <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </motion.div>
         ) : (
           <motion.div

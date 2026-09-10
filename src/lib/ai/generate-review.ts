@@ -40,10 +40,10 @@ Write only the review text, nothing else.`;
 
   try {
     const model = getGeminiClient().getGenerativeModel({
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       systemInstruction: 'You are a helpful assistant that generates authentic Google reviews for retail stores. Your reviews should sound like they were written by real customers.',
       generationConfig: {
-        maxOutputTokens: 200,
+        maxOutputTokens: 1000,
         temperature: 0.8,
       },
     });
