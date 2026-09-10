@@ -9,19 +9,25 @@ import { copyToClipboard } from '@/lib/utils';
 import { toast } from 'sonner';
 
 interface ReviewGeneratorProps {
+  businessId?: string;
   businessName: string;
   selectedTags: string[];
+  selectedTagIds?: string[];
   rating: number;
   googleReviewUrl: string | null;
   aiEnabled: boolean;
+  onSuccess?: () => void;
 }
 
 export function ReviewGenerator({
+  businessId,
   businessName,
   selectedTags,
+  selectedTagIds,
   rating,
   googleReviewUrl,
   aiEnabled,
+  onSuccess,
 }: ReviewGeneratorProps) {
   const [generatedReview, setGeneratedReview] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -65,31 +71,46 @@ export function ReviewGenerator({
   // Copy & open Google handler (works for both AI and manual)
   const handleCopyAndOpen = async () => {
     const reviewText = (showManualInput || !aiEnabled) ? manualReview : generatedReview;
-    if (!reviewText.trim()) {
-      if (googleReviewUrl) {
-        toast.info('Opening Google Reviews...');
-        window.open(googleReviewUrl, '_blank', 'noopener,noreferrer');
-        return;
+
+    // Record review to database
+    if (businessId) {
+      fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_id: businessId,
+          rating,
+          review_text: reviewText.trim() || undefined,
+          tag_ids: selectedTagIds || [],
+          is_private: false,
+        }),
+      }).catch(console.error);
+    }
+
+    if (reviewText.trim()) {
+      const copied = await copyToClipboard(reviewText.trim());
+      if (copied) {
+        toast.success('Review copied to clipboard!', {
+          description: 'Paste it in the Google review form.',
+          duration: 4000,
+        });
       }
-      toast.error('Please write a review first');
-      return;
     }
 
-    const copied = await copyToClipboard(reviewText);
-    if (copied) {
-      toast.success('Review copied to clipboard!', {
-        description: 'Paste it in the Google review form.',
-        duration: 4000,
-      });
-    }
-
-    // Open Google Review URL
+    // Open Google Review URL in new tab
     if (googleReviewUrl) {
       setTimeout(() => {
         window.open(googleReviewUrl, '_blank', 'noopener,noreferrer');
-      }, 500);
+      }, 300);
     } else {
-      toast.info('Google Review URL is not configured. Please contact the store.');
+      toast.info('Google Review URL is not configured.');
+    }
+
+    // Transition our page to the Thank You screen
+    if (onSuccess) {
+      setTimeout(() => {
+        onSuccess();
+      }, 600);
     }
   };
 

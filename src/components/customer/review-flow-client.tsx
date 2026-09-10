@@ -48,6 +48,16 @@ export function ReviewFlowClient({ business, positiveTags, negativeTags }: Revie
     setCurrentStep('success-feedback');
   }, []);
 
+  const handleReviewSuccess = useCallback(() => {
+    setCurrentStep('success-review');
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setCurrentStep('rating');
+    setSelectedRating(0);
+    setSelectedTagIds([]);
+  }, []);
+
   const selectedTagNames = positiveTags
     .filter((tag) => selectedTagIds.includes(tag.id))
     .map((tag) => tag.name);
@@ -137,19 +147,18 @@ export function ReviewFlowClient({ business, positiveTags, negativeTags }: Revie
               />
 
               <ReviewGenerator
+                businessId={business.id}
                 businessName={business.name}
                 selectedTags={selectedTagNames}
+                selectedTagIds={selectedTagIds}
                 rating={selectedRating}
                 googleReviewUrl={business.google_review_url}
                 aiEnabled={business.ai_review_enabled}
+                onSuccess={handleReviewSuccess}
               />
 
               <button
-                onClick={() => {
-                  setCurrentStep('rating');
-                  setSelectedRating(0);
-                  setSelectedTagIds([]);
-                }}
+                onClick={handleReset}
                 className="w-full text-sm text-[#9CA3AF] hover:text-[#4B5563] transition-colors py-2"
               >
                 ← Change rating
@@ -175,11 +184,7 @@ export function ReviewFlowClient({ business, positiveTags, negativeTags }: Revie
               />
 
               <button
-                onClick={() => {
-                  setCurrentStep('rating');
-                  setSelectedRating(0);
-                  setSelectedTagIds([]);
-                }}
+                onClick={handleReset}
                 className="w-full text-sm text-[#9CA3AF] hover:text-[#4B5563] transition-colors py-4 mt-2"
               >
                 ← Change rating
@@ -195,7 +200,12 @@ export function ReviewFlowClient({ business, positiveTags, negativeTags }: Revie
               animate={{ opacity: 1 }}
               className="w-full max-w-md"
             >
-              <SuccessScreen type="review" businessName={business.name} />
+              <SuccessScreen
+                type="review"
+                businessName={business.name}
+                googleReviewUrl={business.google_review_url}
+                onReset={handleReset}
+              />
             </motion.div>
           )}
 
@@ -206,7 +216,11 @@ export function ReviewFlowClient({ business, positiveTags, negativeTags }: Revie
               animate={{ opacity: 1 }}
               className="w-full max-w-md"
             >
-              <SuccessScreen type="feedback" businessName={business.name} />
+              <SuccessScreen
+                type="feedback"
+                businessName={business.name}
+                onReset={handleReset}
+              />
             </motion.div>
           )}
         </AnimatePresence>
