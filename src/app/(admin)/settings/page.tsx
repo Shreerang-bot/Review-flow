@@ -84,15 +84,16 @@ export default function SettingsPage() {
   };
 
   const handleSave = async () => {
-    const result = businessSettingsSchema.safeParse(formData);
-    if (!result.success) {
-      const errors = result.error.flatten().fieldErrors;
-      const firstError = Object.values(errors)[0]?.[0];
-      toast.error(firstError || 'Invalid input');
+    if (!business) {
+      toast.error('Business data not loaded. Please refresh the page.');
       return;
     }
 
-    if (!business) return;
+    // Validate - but skip URL validation for optional fields
+    if (!formData.name.trim()) {
+      toast.error('Business name is required.');
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -103,20 +104,21 @@ export default function SettingsPage() {
         return;
       }
 
+      const updateData = {
+        name: formData.name.trim(),
+        logo_url: formData.logo_url.trim() || null,
+        google_review_url: formData.google_review_url.trim() || null,
+        review_threshold: formData.review_threshold,
+        welcome_message: formData.welcome_message.trim() || 'How was your shopping experience today?',
+        notification_email: formData.notification_email.trim() || null,
+        primary_color: formData.primary_color || '#4F46E5',
+        ai_review_enabled: formData.ai_review_enabled,
+      };
+
       const { error } = await supabase
         .from('businesses')
-        .update({
-          name: formData.name,
-          logo_url: formData.logo_url || null,
-          google_review_url: formData.google_review_url || null,
-          review_threshold: formData.review_threshold,
-          welcome_message: formData.welcome_message,
-          notification_email: formData.notification_email || null,
-          primary_color: formData.primary_color,
-          ai_review_enabled: formData.ai_review_enabled,
-        })
-        .eq('id', business.id)
-        .eq('owner_id', user.id);
+        .update(updateData)
+        .eq('id', business.id);
 
       if (error) {
         console.error('Settings save error:', error);
