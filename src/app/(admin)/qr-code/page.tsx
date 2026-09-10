@@ -14,11 +14,8 @@ export default function QRCodePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copied, setCopied] = useState(false);
+  const [reviewUrl, setReviewUrl] = useState('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  const reviewUrl = business
-    ? `${window.location.origin}/r/${business.slug}`
-    : '';
 
   useEffect(() => {
     async function fetchBusiness() {
@@ -34,6 +31,8 @@ export default function QRCodePage() {
 
       if (data) {
         setBusiness(data);
+        const origin = window.location.origin;
+        setReviewUrl(`${origin}/r/${data.slug}`);
       }
       setIsLoading(false);
     }
@@ -51,7 +50,12 @@ export default function QRCodePage() {
         light: '#FFFFFF',
       },
       errorCorrectionLevel: 'H',
-    }).then(setQrDataUrl);
+    })
+      .then(setQrDataUrl)
+      .catch((err) => {
+        console.error('QR generation error:', err);
+        toast.error('Failed to generate QR code');
+      });
   }, [reviewUrl]);
 
   const handleDownloadPNG = async () => {

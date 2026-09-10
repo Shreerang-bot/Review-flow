@@ -97,6 +97,12 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You are not logged in. Please log in again.');
+        return;
+      }
+
       const { error } = await supabase
         .from('businesses')
         .update({
@@ -109,16 +115,19 @@ export default function SettingsPage() {
           primary_color: formData.primary_color,
           ai_review_enabled: formData.ai_review_enabled,
         })
-        .eq('id', business.id);
+        .eq('id', business.id)
+        .eq('owner_id', user.id);
 
       if (error) {
-        toast.error('Failed to save settings');
+        console.error('Settings save error:', error);
+        toast.error(`Failed to save: ${error.message}`);
         return;
       }
 
-      toast.success('Settings saved successfully');
-    } catch {
-      toast.error('Failed to save settings');
+      toast.success('Settings saved successfully! ✓');
+    } catch (err) {
+      console.error('Settings save exception:', err);
+      toast.error('An unexpected error occurred while saving.');
     } finally {
       setIsSaving(false);
     }
